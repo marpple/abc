@@ -26,6 +26,7 @@
     F.U = window.U = U; // _.noop, return undefined
     F.V = window.V = V; // get value with string
     F.X = window.X = new Object();
+    F.BD = window.BD = BD;
 
     function has_Promise() { return has_Promise.__cache || (has_Promise.__cache = !!V(window, 'Promise.prototype.then')); }
 
@@ -337,8 +338,48 @@
     C.all = F("TODO");
     C.div = F("TODO");
 
+    /* D start */
     function D() {}
-    D.to_array = function(obj) { return _.toArray(arguments.length > 1 ? arguments : obj); };
+    function BD() {} // BD를 전역으로 만들어줘야 함
+    // G['=== 0']= G['===0'] = D.is_zero = function(v) { return v === 0; };
+    // G['=== -1']= G['===-1'] = function(v) { return v === -1; };
+
+    D.t = D.true = J(true);
+    D.f = D.false = J(false);
+    D.to_array = _.toArray;
+
+    BD.is = function(a) {
+      return function(arr) {
+        return _.findIndex(_.isArray(arr) ? arr : _.toArray(arguments), function(v) { return a !== v; }) === -1;
+      };
+    };
+    BD.isnt = function(a) {
+      return function(arr) {
+        return _.findIndex(_.isArray(arr) ? arr : _.toArray(arguments), function(v) { return a === v; }) === -1;
+      };
+    };
+
+    D.not = function(v) { return !v; };
+    D.nnot = function(v) { return !!v; };
+    D.and = function(v) { return !!(v && _.findIndex(arguments, function(v) { return !v; }) === -1); };
+    D.or = B([P, B.find(I), D.nnot]);
+
+    D.add = B([D.arr_or_p_to_array = IF(_.isArray, I).ELSE([P, D.to_array]), B.reduce(function(a, b) { return a + b; })]);
+    D.sub = B([D.arr_or_p_to_array, B.reduce(function(a, b) { return a - b; })]);
+    D.mod = B([D.arr_or_p_to_array, B.reduce(function(a, b) { return a % b; })]);
+    D.mul = B([D.arr_or_p_to_array, B.reduce(function(a, b) { return a * b; })]);
+    D.div = B([D.arr_or_p_to_array, B.reduce(function(a, b) { return a / b; })]);
+
+    D.parse_int = B([D.arr_or_p_to_array, B.map(function(v) { return parseInt(v); })]);
+    D.iadd = B([D.parse_int, D.add]);
+    D.isub = B([D.parse_int, D.sub]);
+
+    D.eq = B([D.arr_or_p_to_array, B(X, function(v,i,a) { return a[0] != v; }, _.findIndex), BD.is(-1)]);
+    D.seq = B([D.arr_or_p_to_array, B(X, function(v,i,a) { return a[0] !== v; }, _.findIndex), BD.is(-1)]);
+
+    D.neq = B([D.eq, D.not]);
+    D.sneq = B([D.seq, D.not]);
+
 
     function F(nodes) {
         var f = V(G, nodes);
@@ -584,6 +625,7 @@ function respect_underscore(_) {
         if (_.isObject(value)) return _.matcher(value);
         return B.V(value);
     };
+
 
     var createAssigner = function(keysFunc, undefinedOnly) {
         return function(obj) {
